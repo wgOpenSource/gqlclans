@@ -6,27 +6,6 @@ from gqlclans.schema import schema
 from gqlclans.app import app
 
 
-def test_ping():
-    client = Client(schema)
-    result = client.execute('{ ping }')
-    assert result == {
-        'data': {
-            'ping': 'Ping success!'
-        }
-    }
-
-
-QUERY = '''
-query getUser($id: ID) {
-        user(id: $id) {
-            id
-            firstName
-            lastName
-        }
-    }
-'''
-
-
 def test_clan():
     query = '{ clans(clanId: "10164") { tag name }}'
     client = Client(schema)
@@ -38,6 +17,46 @@ def test_clan():
                     'tag': 'BOUHA',
                     'name': 'Второй  всадник  апокалипсиса',
                 }
+            ]
+        }
+    }
+
+
+def test_servers():
+    query = '{ servers(limit: 2) { server playersOnline }}'
+    client = Client(schema)
+    result = client.execute(query)
+    assert result == {
+        'data': {
+            'servers': [
+                {
+                    'playersOnline': 14583,
+                    'server': 'RU8',
+                },
+                {
+                    'playersOnline': 37041,
+                    'server': 'RU7',
+                }
+            ]
+        }
+    }
+
+
+def test_search():
+    query = '{ search(searchTxt: "BOUHA") { tag name }}'
+    client = Client(schema)
+    result = client.execute(query)
+    assert result == {
+        'data': {
+            'search': [
+                {
+                    'tag': 'BETH',
+                    'name': 'BouHa',
+                },
+                {
+                    'tag': 'BOUHA',
+                    'name': 'Второй  всадник  апокалипсиса',
+                },
             ]
         }
     }

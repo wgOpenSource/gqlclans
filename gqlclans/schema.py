@@ -1,13 +1,19 @@
 
 import graphene
 
-from gqlclans.logic import get_clan_info, search_clan
+from gqlclans.logic import get_clan_info, search_clan, get_servers_info
+
+
+class ServerInfo(graphene.ObjectType):
+    players_online = graphene.Int()
+    server = graphene.String()
 
 
 class Member(graphene.ObjectType):
     name = graphene.String()
     account_id = graphene.ID()
     role = graphene.String()
+
 
 class Message(graphene.ObjectType):
     body = graphene.String()
@@ -41,26 +47,17 @@ class Mutation(graphene.ObjectType):
 
 
 class Query(graphene.ObjectType):
-    ping = graphene.String()
-    clans = graphene.Field(
-        graphene.List(Clan), clan_id=graphene.String(default_value='20226')
-    )
-    search = graphene.Field(
-        graphene.List(Clan), search_txt=graphene.String(default_value='')
-    )
+    clans = graphene.Field(graphene.List(Clan), clan_id=graphene.String(default_value='20226'))
+    search = graphene.Field(graphene.List(Clan), search_txt=graphene.String(default_value=''))
+    servers = graphene.Field(graphene.List(ServerInfo), limit=graphene.Int(default_value=10))
 
-    def resolve_ping(context, info):
-        return 'Ping success!'
+    def resolve_servers(self, info, limit):
+        result = get_servers_info()['data']['wot'][:limit]
+        return map(lambda server: ServerInfo(
+            players_online=server['players_online'],
+            server=server['server'],
+        ), result)
 
-    '''
-    Здесь мы должны получить запрос вида
-    { 
-        query(clanId: clan_id) { !!! Для того что бы был clan_id нужно в schema выключить настройку!
-            name
-            tag
-        }
-    }
-    '''
     def resolve_clans(context, info, clan_id):
         data = get_clan_info(clan_id)['data']
         return parse_data(data)
