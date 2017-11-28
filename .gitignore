@@ -101,8 +101,4 @@ ENV/
 .mypy_cache/
 
 .idea
-node_modules/
 .DS_Store
-
-# GraphQL schema
-schema.json
