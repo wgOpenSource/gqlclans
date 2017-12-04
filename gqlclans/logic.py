@@ -1,14 +1,26 @@
+from collections import defaultdict
 
 import requests
+
 
 CLAN_INFO = 'https://api.worldoftanks.ru/wgn/clans/info/?application_id=8c2d3111d4e93eaa2a6e008424123d6d&clan_id={}'
 SEARCH_CLAN = 'https://api.worldoftanks.ru/wgn/clans/list/?application_id=8c2d3111d4e93eaa2a6e008424123d6d&fields=clan_id&game=wot&search={}'
 SERVERS_INFO = 'https://api.worldoftanks.ru/wgn/servers/info/?application_id=8c2d3111d4e93eaa2a6e008424123d6d&game=wot'
 
 
+__all__ = (
+    'get_clan_info',
+    'search_clan',
+    'get_servers_info',
+    'save_message',
+    'get_messages',
+)
+
+
 class PapiRequestSession:
     session = None
     adapters = {}
+    store = defaultdict(list)
 
     def __init__(self):
         self.session = requests.Session()
@@ -18,7 +30,8 @@ class PapiRequestSession:
 
 def get_clan_info(clan_id):
     papi_request = PapiRequestSession()
-    return papi_request.session.get(CLAN_INFO.format(clan_id)).json()
+    result = papi_request.session.get(CLAN_INFO.format(clan_id))
+    return result.json()
 
 
 def search_clan(search_txt):
@@ -29,3 +42,13 @@ def search_clan(search_txt):
 def get_servers_info():
     papi_request = PapiRequestSession()
     return papi_request.session.get(SERVERS_INFO).json()
+
+
+def save_message(clan_id, message):
+    papi_request = PapiRequestSession()
+    papi_request.store[str(clan_id)].append(message)
+
+
+def get_messages(clan_id):
+    papi_request = PapiRequestSession()
+    return papi_request.store[str(clan_id)]
