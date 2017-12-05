@@ -87,6 +87,44 @@ def test_mutation():
     }
 
 
+def test_get_messages_after_mutation():
+    mutation = '''
+        mutation TestSaveMessage {
+            addMessage(body: "Text", clanId: "10164"){
+                success
+            }
+        }
+    '''
+    query = '''
+        query TestQuery {
+            clans(clanId: "10164") {
+                messages {
+                    body
+                }
+            }
+        }
+    '''
+    client = Client(schema)
+    mutation_result = client.execute(mutation)
+    result = client.execute(query)
+
+    assert mutation_result == {
+        'data': {
+            'addMessage': {
+                'success': True
+            }
+        }
+    }
+    assert result == {
+        'data': {
+            'clans': [
+                {'messages': [{ 'body': 'Text' }]}
+            ]
+        }
+    }
+
+
+
 async def test_app(test_client):
     client = await test_client(app)
     response = await client.get('/?query={clans{name tag}}')

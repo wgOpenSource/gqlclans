@@ -8,15 +8,6 @@ SEARCH_CLAN = 'https://api.worldoftanks.ru/wgn/clans/list/?application_id=8c2d31
 SERVERS_INFO = 'https://api.worldoftanks.ru/wgn/servers/info/?application_id=8c2d3111d4e93eaa2a6e008424123d6d&game=wot'
 
 
-__all__ = (
-    'get_clan_info',
-    'search_clan',
-    'get_servers_info',
-    'save_message',
-    'get_messages',
-)
-
-
 class PapiRequestSession:
     session = None
     adapters = {}
