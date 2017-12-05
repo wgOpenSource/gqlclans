@@ -2,12 +2,12 @@ import graphene
 from promise import Promise
 from promise.dataloader import DataLoader
 
-from gqlclans.logic import get_clan_info, search_clan, get_servers_info
+from gqlclans import logic
 
 
 class ClanLoader(DataLoader):
     def batch_load_fn(self, ids):
-        return Promise.resolve([get_clan_info(id) for id in ids])
+        return Promise.resolve([logic.get_clan_info(id) for id in ids])
 
 
 clan_loader = ClanLoader()
@@ -42,6 +42,7 @@ class AddMessage(graphene.Mutation):
     message = graphene.Field(lambda: Message)
 
     def mutate(self, info, body, clan_id):
+        logic.save_message(clan_id, body)
         message = Message(body=body)
         success = True
         return AddMessage(message=message, success=success)
@@ -74,21 +75,21 @@ class Query(graphene.ObjectType):
     servers = graphene.Field(graphene.List(ServerInfo), limit=graphene.Int(default_value=10))
 
     def resolve_servers(self, info, limit):
-        result = get_servers_info()['data']['wot'][:limit]
+        result = logic.get_servers_info()['data']['wot'][:limit]
         return map(lambda server: ServerInfo(
             players_online=server['players_online'],
             server=server['server'],
         ), result)
 
     def resolve_clans(self, info, clan_id):
-        data = get_clan_info(clan_id)['data']
+        data = logic.get_clan_info(clan_id)['data']
         return parse_clans_data(data)
 
     def resolve_search(self, info, search_txt):
-        result = search_clan(search_txt)['data']
+        result = logic.search_clan(search_txt)['data']
         clan_ids = list(map(lambda clan: clan['clan_id'], result))
         clan_ids = ','.join(map(str, clan_ids))
-        data = get_clan_info(clan_ids)['data']
+        data = logic.get_clan_info(clan_ids)['data']
         return parse_clans_data(data)
 
 
@@ -99,7 +100,7 @@ def clan_from_data(data):
         clan_id=data['clan_id'],
         color=data['color'],
         members=data['members'],
-        messages=[],
+        messages=map(lambda body: Message(body=body), logic.get_messages(data['clan_id'])),
     )
 
 
