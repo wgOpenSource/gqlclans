@@ -76,9 +76,6 @@ def parse_data(data):
         account_id=member['account_id'],
         role=member['role']
     )
-    convert_message = lambda msg: Message(
-        body=msg
-    )
     clans = []
     for content in data.values():
         clans.append(
@@ -88,7 +85,7 @@ def parse_data(data):
                 clan_id=content['clan_id'],
                 color=content['color'],
                 members=map(get_member, content['members']),
-                messages=map(convert_message,
+                messages=map(lambda msg: Message(body=msg),
                              logic.get_messages(content['clan_id'])),  # TODO: just for test
             ))
     return clans

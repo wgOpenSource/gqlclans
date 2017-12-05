@@ -30,8 +30,7 @@ class PapiRequestSession:
 
 def get_clan_info(clan_id):
     papi_request = PapiRequestSession()
-    result = papi_request.session.get(CLAN_INFO.format(clan_id))
-    return result.json()
+    return papi_request.session.get(CLAN_INFO.format(clan_id)).json()
 
 
 def search_clan(search_txt):
