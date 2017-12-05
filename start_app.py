@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 from aiohttp_utils import run
 
 from gqlclans.app import app

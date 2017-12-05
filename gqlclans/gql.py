@@ -1,7 +1,7 @@
 
 import json
 
-from schema import schema
+from gqlclans.schema import schema
 
 
 query = '''
