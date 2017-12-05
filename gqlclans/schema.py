@@ -105,10 +105,7 @@ def clan_from_data(data):
 
 
 def parse_clans_data(data):
-    clans = []
-    for content in data.values():
-        clans.append(clan_from_data(content))
-    return clans
+    return [clan_from_data(content) for content in data.values()]
 
 
 schema = graphene.Schema(query=Query, mutation=Mutation)
