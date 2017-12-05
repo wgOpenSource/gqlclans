@@ -89,7 +89,7 @@ def parse_data(data):
                 color=content['color'],
                 members=map(get_member, content['members']),
                 messages=map(convert_message,
-                             logic.get_messages(content['clan_id'])),
+                             logic.get_messages(content['clan_id'])),  # TODO: just for test
             ))
     return clans
 
