@@ -1,7 +1,7 @@
 def pytest_configure(config):
     from gqlclans.logic import PapiRequestSession
     from tests.requestsnapshot import FileSnapshotStore, SnapshotAdapter
-    s_adaptor = SnapshotAdapter(FileSnapshotStore('tests/testsnapshots'))
+    s_adaptor = SnapshotAdapter(FileSnapshotStore('tests/testsnapshots', True))
 
     PapiRequestSession.adapters['https://'] = s_adaptor
 
