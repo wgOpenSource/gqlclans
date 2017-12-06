@@ -1,6 +1,12 @@
 import graphene
 
-import gqlclans.logic
+from gqlclans.logic import (
+    get_clan_info,
+    get_messages,
+    get_servers_info,
+    save_message,
+    search_clan,
+)
 
 
 class ServerInfo(graphene.ObjectType):
@@ -27,7 +33,7 @@ class AddMessage(graphene.Mutation):
     message = graphene.Field(lambda: Message)# lambda is nice pattern for describe relation with not loaded yet classes
 
     def mutate(self, info, body, clan_id):
-        gqlclans.logic.save_message(clan_id, body)
+        save_message(clan_id, body)
         message = Message(body=body)
         success = True
         return AddMessage(message=message, success=success)
@@ -52,21 +58,21 @@ class Query(graphene.ObjectType):
     servers = graphene.Field(graphene.List(ServerInfo), limit=graphene.Int(default_value=10))
 
     def resolve_servers(self, info, limit):
-        result = gqlclans.logic.get_servers_info()['data']['wot'][:limit]
+        result = get_servers_info()['data']['wot'][:limit]
         return map(lambda server: ServerInfo(
             players_online=server['players_online'],
             server=server['server'],
         ), result)
 
     def resolve_clans(context, info, clan_id):
-        data = gqlclans.logic.get_clan_info(clan_id)['data']
+        data = get_clan_info(clan_id)['data']
         return parse_data(data)
 
     def resolve_search(context, info, search_txt):
-        result = gqlclans.logic.search_clan(search_txt)['data']
+        result = search_clan(search_txt)['data']
         clan_ids = list(map(lambda clan: clan['clan_id'], result))
         clan_ids = ','.join(map(str, clan_ids))
-        data = gqlclans.logic.get_clan_info(clan_ids)['data']
+        data = get_clan_info(clan_ids)['data']
         return parse_data(data)
 
 
@@ -86,7 +92,7 @@ def parse_data(data):
                 color=content['color'],
                 members=map(get_member, content['members']),
                 messages=map(lambda msg: Message(body=msg),
-                             gqlclans.logic.get_messages(content['clan_id'])),  # TODO: just for test
+                             get_messages(content['clan_id'])),  # TODO: just for test
             ))
     return clans
 
