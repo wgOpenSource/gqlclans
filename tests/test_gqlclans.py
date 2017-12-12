@@ -87,6 +87,50 @@ def test_mutation():
     }
 
 
+def test_batch_loading_cache(mocker):
+    query = '''{
+        clans(clanId: "12344") {
+            members {
+                clan {
+                    clanId
+                }
+            }
+        }
+    }
+    '''
+    mocked_clan_info_response = {
+        'data': {
+            '12344': {
+                'clan_id': 12344,
+                'name': 'Mocked Name',
+                'tag': 'MCKD',
+                'color': '000000',
+                'members': [{
+                    'account_name': f'Account-{i}',
+                    'account_id': i,
+                    'role': 'private',
+                } for i in range(5)]
+            }
+        }
+    }
+    mocked_clan_info = mocker.patch('gqlclans.logic.get_clan_info', return_value=mocked_clan_info_response)
+
+    client = Client(schema)
+    result = client.execute(query)
+    assert len(mocked_clan_info.mock_calls) == 2
+    assert result == {
+        'data': {
+            'clans': [{
+                'members': [{
+                    'clan': {
+                        'clanId': '12344',
+                    }
+                } for _ in range(5)]
+            }]
+        },
+    }
+
+
 async def test_app(test_client):
     client = await test_client(app)
     response = await client.get('/?query={clans{name tag}}')

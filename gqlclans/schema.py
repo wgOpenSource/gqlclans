@@ -1,6 +1,16 @@
 import graphene
+from promise import Promise
+from promise.dataloader import DataLoader
 
 from gqlclans import logic
+
+
+class ClanLoader(DataLoader):
+    def batch_load_fn(self, ids):
+        return Promise.resolve([logic.get_clan_info(id) for id in ids])
+
+
+clan_loader = ClanLoader()
 
 
 class ServerInfo(graphene.ObjectType):
@@ -12,6 +22,11 @@ class Member(graphene.ObjectType):
     name = graphene.String()
     account_id = graphene.ID()
     role = graphene.String()
+    clanId = graphene.String()
+    clan = graphene.Field(lambda: Clan)
+
+    def resolve_clan(self, info):
+        return clan_loader.load(self.clanId).then(lambda data: clan_from_data(data['data'][str(self.clanId)]))
 
 
 class Message(graphene.ObjectType):
@@ -24,7 +39,7 @@ class AddMessage(graphene.Mutation):
         clan_id = graphene.ID()
 
     success = graphene.Boolean()
-    message = graphene.Field(lambda: Message)# lambda is nice pattern for describe relation with not loaded yet classes
+    message = graphene.Field(lambda: Message)
 
     def mutate(self, info, body, clan_id):
         logic.save_message(clan_id, body)
@@ -40,6 +55,14 @@ class Clan(graphene.ObjectType):
     color = graphene.String()
     members = graphene.List(Member)
     messages = graphene.List(Message)
+
+    def resolve_members(self, info):
+        return map(lambda member: Member(
+            name=member['account_name'],
+            account_id=member['account_id'],
+            role=member['role'],
+            clanId=self.clan_id,
+        ), self.members)
 
 
 class Mutation(graphene.ObjectType):
@@ -58,37 +81,31 @@ class Query(graphene.ObjectType):
             server=server['server'],
         ), result)
 
-    def resolve_clans(context, info, clan_id):
+    def resolve_clans(self, info, clan_id):
         data = logic.get_clan_info(clan_id)['data']
-        return parse_data(data)
+        return parse_clans_data(data)
 
-    def resolve_search(context, info, search_txt):
+    def resolve_search(self, info, search_txt):
         result = logic.search_clan(search_txt)['data']
         clan_ids = list(map(lambda clan: clan['clan_id'], result))
         clan_ids = ','.join(map(str, clan_ids))
         data = logic.get_clan_info(clan_ids)['data']
-        return parse_data(data)
+        return parse_clans_data(data)
 
 
-def parse_data(data):
-    get_member = lambda member: Member(
-        name=member['account_name'],
-        account_id=member['account_id'],
-        role=member['role']
+def clan_from_data(data):
+    return Clan(
+        name=data['name'],
+        tag=data['tag'],
+        clan_id=data['clan_id'],
+        color=data['color'],
+        members=data['members'],
+        messages=map(lambda body: Message(body=body), logic.get_messages(data['clan_id'])),
     )
-    clans = []
-    for content in data.values():
-        clans.append(
-            Clan(
-                name=content['name'],
-                tag=content['tag'],
-                clan_id=content['clan_id'],
-                color=content['color'],
-                members=map(get_member, content['members']),
-                messages=map(lambda msg: Message(body=msg),
-                             logic.get_messages(content['clan_id'])),  # TODO: just for test
-            ))
-    return clans
+
+
+def parse_clans_data(data):
+    return [clan_from_data(content) for content in data.values()]
 
 
 schema = graphene.Schema(query=Query, mutation=Mutation)
