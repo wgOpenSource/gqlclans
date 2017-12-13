@@ -90,6 +90,7 @@ def test_mutation():
 def test_batch_loading_cache(mocker):
     query = '''{
         clans(clanId: "12344") {
+            name
             members {
                 clan {
                     clanId
@@ -113,14 +114,16 @@ def test_batch_loading_cache(mocker):
             }
         }
     }
-    mocked_clan_info = mocker.patch('gqlclans.logic.get_clan_info', return_value=mocked_clan_info_response)
+    mocker.patch('gqlclans.clan.resolvers.get_clan_info', return_value=mocked_clan_info_response)
+    member_clan_info_mock = mocker.patch('gqlclans.clan.models.get_clan_info', return_value=mocked_clan_info_response)
 
     client = Client(schema)
     result = client.execute(query)
-    assert len(mocked_clan_info.mock_calls) == 2
+    assert len(member_clan_info_mock.mock_calls) == 1
     assert result == {
         'data': {
             'clans': [{
+                'name': 'Mocked Name',
                 'members': [{
                     'clan': {
                         'clanId': '12344',
