@@ -113,7 +113,7 @@ def test_batch_loading_cache(mocker):
             }
         }
     }
-    mocked_clan_info = mocker.patch('gqlclans.logic.get_clan_info', return_value=mocked_clan_info_response)
+    mocked_clan_info = mocker.patch('gqlclans.schema.get_clan_info', return_value=mocked_clan_info_response)
 
     client = Client(schema)
     result = client.execute(query)
