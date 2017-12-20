@@ -114,12 +114,11 @@ def test_batch_loading_cache(mocker):
             }
         }
     }
-    mocker.patch('gqlclans.clan.resolvers.get_clan_info', return_value=mocked_clan_info_response)
-    member_clan_info_mock = mocker.patch('gqlclans.clan.models.get_clan_info', return_value=mocked_clan_info_response)
+    member_clan_info_mock = mocker.patch('gqlclans.clans.resolvers.get_clan_info', return_value=mocked_clan_info_response)
 
     client = Client(schema)
     result = client.execute(query)
-    assert len(member_clan_info_mock.mock_calls) == 1
+    assert len(member_clan_info_mock.mock_calls) == 2
     assert result == {
         'data': {
             'clans': [{

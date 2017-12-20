@@ -1,10 +1,16 @@
-from gqlclans.logic import get_servers_info
-from gqlclans.server_info.models import ServerInfo
+import graphene
+
+from gqlclans.contrib.node_manager import manager
+from gqlclans.server_info.dtos import IServerInfo
+from gqlclans.server_info.logic import get_servers_info
 
 
-def resolve_server_info(root, info, limit):
-    result = get_servers_info()['data']['wot'][:limit]
-    return map(lambda server: ServerInfo(
-        players_online=server['players_online'],
-        server=server['server'],
-    ), result)
+class RootResolvers(object):
+    @manager.to_gql_type
+    def resolve_servers(self, info, limit):
+        return get_servers_info()['data']['wot'][:limit]
+
+
+class ServerInfo(graphene.ObjectType):
+    class Meta:
+        interfaces = (IServerInfo, )

@@ -1,20 +1,20 @@
 import graphene
 
-from gqlclans.clan.models import Clan
-from gqlclans.message.mutations import AddMessage
-from gqlclans.clan.resolvers import resolve_clan, resolve_search
-from gqlclans.server_info.models import ServerInfo
-from gqlclans.server_info.resolvers import resolve_server_info
+from gqlclans.clans.dtos import IClansRoot
+from gqlclans.clans.mutations import AddMessage
+from gqlclans.clans.resolvers import RootResolver as ClansResolvers
+from gqlclans.contrib.node_manager import manager
+from gqlclans.server_info.dtos import IServersRoot
+from gqlclans.server_info.resolvers import RootResolvers as ServersResolvers
+
+
+class Roots(ClansResolvers, ServersResolvers, graphene.ObjectType):
+    class Meta:
+        interfaces = (IClansRoot, IServersRoot, )
 
 
 class Mutation(graphene.ObjectType):
     add_message = AddMessage.Field()
 
 
-class Query(graphene.ObjectType):
-    clans = graphene.Field(graphene.List(Clan), clan_id=graphene.String(default_value='20226'), resolver=resolve_clan)
-    search = graphene.Field(graphene.List(Clan), search_txt=graphene.String(default_value=''), resolver=resolve_search)
-    servers = graphene.Field(graphene.List(ServerInfo), limit=graphene.Int(default_value=10), resolver=resolve_server_info)
-
-
-schema = graphene.Schema(query=Query, mutation=Mutation)
+schema = graphene.Schema(query=Roots, types=manager.types(), mutation=Mutation)
