@@ -28,6 +28,5 @@ class IClan(graphene.Interface):
 
 
 class IAddMessage(graphene.Interface):
-
     success = graphene.Boolean()
     message = graphene.Field(lambda: IMessage)
