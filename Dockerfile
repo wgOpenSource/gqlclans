@@ -1,16 +1,16 @@
 FROM python:3.6
 
-RUN mkdir /src
-WORKDIR /src
-
-COPY requirements.txt requirements.txt
+COPY requirements.txt /src/requirements.txt
 RUN pip install tox && \
-    pip install -r requirements.txt
+    pip install -r /src/requirements.txt
 
+WORKDIR /src
 COPY scripts/start.sh start.sh
-COPY ./start_app.py ./tox.ini /src/
+COPY ./start_app.py ./tox.ini ./init_settings.py ./settings.py /src/
 COPY tests tests
 COPY gqlclans gqlclans
+
+RUN python ./init_settings.py -s "os.environ.get('WGAPI_APPLICATION_ID')"
 
 EXPOSE 8567
 

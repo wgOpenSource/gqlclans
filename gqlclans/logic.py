@@ -3,9 +3,13 @@ from collections import defaultdict
 import requests
 
 
-CLAN_INFO = 'https://api.worldoftanks.ru/wgn/clans/info/?application_id=8c2d3111d4e93eaa2a6e008424123d6d&clan_id={}'
-SEARCH_CLAN = 'https://api.worldoftanks.ru/wgn/clans/list/?application_id=8c2d3111d4e93eaa2a6e008424123d6d&fields=clan_id&game=wot&search={}'
-SERVERS_INFO = 'https://api.worldoftanks.ru/wgn/servers/info/?application_id=8c2d3111d4e93eaa2a6e008424123d6d&game=wot'
+import settings
+
+
+CLAN_INFO = 'https://api.worldoftanks.ru/wgn/clans/info/?application_id=%s&clan_id={}' % settings.WGAPI_APPLICATION_ID
+SEARCH_CLAN = 'https://api.worldoftanks.ru/wgn/clans/list/?application_id=%s&fields=clan_id&game=wot&search={}' % settings.WGAPI_APPLICATION_ID
+SERVERS_INFO = 'https://api.worldoftanks.ru/wgn/servers/info/?application_id=%s&game=wot' % settings.WGAPI_APPLICATION_ID
+
 
 
 __all__ = (

@@ -11,6 +11,12 @@ Install python packages in virtualenv:
 
 # Usage
 
+Generate settings
+
+    ```
+    python ./scripts/init_settings.py <WGAPI_APPLICATION_ID>
+    ```
+
 To run http server command:
 
     ```
@@ -25,7 +31,7 @@ Now you can visit [http://localhost:8567](http://localhost:8567) and play with G
 To run backend container from docker:
 
     ```
-    docker create --name=gqlclans -t -i -p 8567:8567 sudoaptget/gqlclans:latest
+    docker create --name=gqlclans -t -i -p 8567:8567 sudoaptget/gqlclans:latest -e WGAPI_APPLICATION_ID=<WGAPI_APPLICATION_ID>
     docker start -i gqlclans
     ```
 

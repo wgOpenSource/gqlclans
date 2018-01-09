@@ -102,3 +102,6 @@ ENV/
 
 .idea
 .DS_Store
+
+# Settings
+settings_local.py

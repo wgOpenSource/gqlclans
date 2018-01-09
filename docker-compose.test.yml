@@ -1,3 +1,5 @@
 sut:
   build: .
   command: tox
+  environment:
+    WGAPI_APPLICATION_ID: "8c2d3111d4e93eaa2a6e008424123d6d"
