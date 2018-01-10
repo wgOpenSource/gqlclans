@@ -6,7 +6,7 @@ RUN pip install tox && \
 
 WORKDIR /src
 COPY scripts/start.sh start.sh
-COPY ./start_app.py ./tox.ini ./init_settings.py ./settings.py /src/
+COPY ./start_app.py ./tox.ini ./scripts/init_settings.py ./settings.py /src/
 COPY tests tests
 COPY gqlclans gqlclans
 
