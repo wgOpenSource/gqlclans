@@ -26,8 +26,7 @@ def collect_fields(node, fragments):
                     leaf['name']['value']: collect_fields(leaf, fragments)
                 })
             elif leaf['kind'] == 'FragmentSpread':
-                field.update(collect_fields(fragments[leaf['name']['value']],
-                                            fragments))
+                field.update(collect_fields(fragments[leaf['name']['value']], fragments))
 
     return field
 

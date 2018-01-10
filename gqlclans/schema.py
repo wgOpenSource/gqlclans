@@ -1,7 +1,7 @@
 import graphene
 from promise import Promise
 from promise.dataloader import DataLoader
-from stringcase import camelcase
+from stringcase import camelcase, snakecase
 
 from gqlclans import logic
 from gqlclans.utils import get_fields
@@ -24,21 +24,6 @@ account_loader = AccountLoader()
 class ServerInfo(graphene.ObjectType):
     players_online = graphene.Int()
     server = graphene.String()
-
-
-class Member(graphene.ObjectType):
-    account_name = graphene.String()
-    account_id = graphene.ID()
-    role = graphene.String()
-    role_i18n = graphene.String()
-    joined_at = graphene.Int()
-    clan_id = graphene.String()
-    clan = graphene.Field(lambda: Clan)
-
-    def resolve_clan(self, info):
-        if self.clan_id:
-            return clan_loader.load(self.clan_id).then(lambda data: clan_from_data(data['data'][str(self.clan_id)]))
-        return None
 
 
 class Message(graphene.ObjectType):
@@ -65,18 +50,44 @@ class Clan(graphene.ObjectType):
     tag = graphene.String()
     clan_id = graphene.ID()
     color = graphene.String()
-    members = graphene.List(Member)
+    members = graphene.List(lambda: Account)
     messages = graphene.List(Message)
 
+    @staticmethod
+    def get_additional_info_requested_fields(requested_fields):
+        clan_member_fields = list(map(camelcase, ('nickname', 'account_id', 'joined_at', 'role', 'role_i18n', 'clan',)))
+        return {field for field in requested_fields if field not in clan_member_fields}
+
+    @staticmethod
+    def request_members_additional_info(accounts, fields):
+        account_ids = map(lambda account: str(account['account_id']), accounts)
+        account_promise = account_loader.load(','.join(account_ids)).then(lambda result: list(result['data'].values()))
+        accounts_data = account_promise.get()
+        for account in accounts:
+            account.update({
+                snakecase(field): accounts_data[snakecase(field)] for field in fields
+            })
+
+    def create_graphene_accounts(self, accounts_data, requested_fields):
+        accounts = []
+        for account in accounts_data:
+            account_data = {
+                'clan_id': self.clan_id,
+                **{field: value for field, value in account.items() if camelcase(field) in requested_fields},
+            }
+            if 'nickname' in requested_fields:
+                account_data.update({'nickname': account.get('account_name') or account.get('nickname')})
+            accounts.append(Account(**account_data))
+
+        return accounts
+
     def resolve_members(self, info):
-        return map(lambda member: Member(
-            account_name=member['account_name'],
-            account_id=member['account_id'],
-            joined_at=member['joined_at'],
-            role=member['role'],
-            role_i18n=member['role_i18n'],
-            clan_id=self.clan_id,
-        ), self.members)
+        requested_fields = get_fields(info).keys()
+        request_account_info_fields = self.get_additional_info_requested_fields(requested_fields)
+        if request_account_info_fields:
+            self.request_members_additional_info(self.members, request_account_info_fields)
+
+        return self.create_graphene_accounts(self.members, requested_fields)
 
 
 class Mutation(graphene.ObjectType):
@@ -97,17 +108,17 @@ class Account(graphene.ObjectType):
 
     # Clan members info
     role = graphene.String()
-    role_i18n = graphene.String()
+    # Fields with numbers in names capitalize incorrectly, https://github.com/graphql-python/graphene/issues/643
+    # role_i18n = graphene.String()
     joined_at = graphene.Int()
     clan = graphene.Field(lambda: Clan)
+    # Statistics is a complex structure
+    # statistics = graphene.Field()
 
     def resolve_clan(self, info):
         if self.clan_id:
             return clan_loader.load(self.clan_id).then(lambda data: clan_from_data(data['data'][str(self.clan_id)]))
         return None
-
-    # Statistics is complex structure
-    # statistics = graphene.Field()
 
 
 class Query(graphene.ObjectType):
@@ -136,7 +147,7 @@ class Query(graphene.ObjectType):
 
     def resolve_accounts(self, info, account_ids):
         requested_fields = get_fields(info).keys()
-        clan_specific_account_fields = ['joined_at', 'role', 'role_i18n']
+        clan_specific_account_fields = list(map(camelcase, ('joined_at', 'role', 'role_i18n',)))
         request_clan_account_fields = [field for field in requested_fields if field in clan_specific_account_fields]
 
         accounts_promise = account_loader.load(','.join(account_ids)).then(lambda result: list(result['data'].values()))
@@ -148,22 +159,23 @@ class Query(graphene.ObjectType):
             if clan_ids:
                 clans_promise = clan_loader.load(','.join(clan_ids)).then(lambda result: result['data'])
                 clans_data = clans_promise.get()
-            for account_data in accounts_data:
+            for account in accounts_data:
                 account_clan_data = None
-                if account_data.get('clan_id'):
+                if account.get('clan_id'):
                     account_clan_data = [
-                        member for member in clans_data[str(account_data['clan_id'])]['members'] if
-                        member['account_id'] == account_data['account_id']
+                        member for member in clans_data[str(account['clan_id'])]['members'] if
+                        member['account_id'] == account['account_id']
                     ][0]
 
                 account_clans_data = {
-                    field: account_clan_data[field] if account_clan_data else None
+                    snakecase(field): account_clan_data[snakecase(field)] if account_clan_data else None
                     for field in request_clan_account_fields
                 }
-                account_data.update(account_clans_data)
+                account.update(account_clans_data)
 
         return list(map(lambda data: Account(**{
-            field: value for field, value in data.items() if camelcase(field) in requested_fields
+            'clan_id': data['clan_id'],
+            **{field: value for field, value in data.items() if camelcase(field) in requested_fields}
         }), accounts_data))
 
 
