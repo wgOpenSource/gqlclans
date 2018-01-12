@@ -30,11 +30,11 @@ def test_servers():
         'data': {
             'servers': [
                 {
-                    'playersOnline': 14583,
+                    'playersOnline': 74532,
                     'server': 'RU8',
                 },
                 {
-                    'playersOnline': 37041,
+                    'playersOnline': 54727,
                     'server': 'RU7',
                 }
             ]

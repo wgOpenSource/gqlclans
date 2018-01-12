@@ -28,7 +28,7 @@ def main():
     args = parser.parse_args()
     error = partial(exit_and_print_error, args.silent)
     if not args.force and os.path.isfile(args.output):
-        error('%s already exists. Use --force to override this file' % args.output)
+        error(f'{args.output} already exists. Use --force to override this file')
     config = generate_settings_file(args)
     with open(args.output, 'w') as output_file:
         output_file.write(config)

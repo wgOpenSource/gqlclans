@@ -105,3 +105,4 @@ ENV/
 
 # Settings
 settings_local.py
+docker-compose.override.yml

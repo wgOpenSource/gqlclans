@@ -6,11 +6,12 @@ RUN pip install tox && \
 
 WORKDIR /src
 COPY scripts/start.sh start.sh
-COPY ./start_app.py ./tox.ini ./scripts/init_settings.py ./settings.py /src/
+COPY ./start_app.py ./tox.ini ./settings.py /src/
+COPY scripts/init_settings.py /src/scripts/init_settings.py
 COPY tests tests
 COPY gqlclans gqlclans
 
-RUN python ./init_settings.py -s "os.environ.get('WGAPI_APPLICATION_ID')"
+RUN python ./scripts/init_settings.py -s "os.environ.get('WGAPI_APPLICATION_ID')"
 
 EXPOSE 8567
 

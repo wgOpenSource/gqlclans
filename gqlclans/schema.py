@@ -3,7 +3,6 @@ from promise import Promise
 from promise.dataloader import DataLoader
 
 from gqlclans import logic
-import settings
 
 
 class ClanLoader(DataLoader):
@@ -71,7 +70,7 @@ class Mutation(graphene.ObjectType):
 
 
 class Query(graphene.ObjectType):
-    clans = graphene.Field(graphene.List(Clan), clan_id=graphene.String(default_value=settings.DEFAULT_CLAN_ID))
+    clans = graphene.Field(graphene.List(Clan), clan_id=graphene.String(default_value='20226'))
     search = graphene.Field(graphene.List(Clan), search_txt=graphene.String(default_value=''))
     servers = graphene.Field(graphene.List(ServerInfo), limit=graphene.Int(default_value=10))
 

@@ -1,15 +1,15 @@
 from collections import defaultdict
 
-import requests
+import urllib.parse
 
+import requests
 
 import settings
 
 
-CLAN_INFO = 'https://api.worldoftanks.ru/wgn/clans/info/?application_id=%s&clan_id={}' % settings.WGAPI_APPLICATION_ID
-SEARCH_CLAN = 'https://api.worldoftanks.ru/wgn/clans/list/?application_id=%s&fields=clan_id&game=wot&search={}' % settings.WGAPI_APPLICATION_ID
-SERVERS_INFO = 'https://api.worldoftanks.ru/wgn/servers/info/?application_id=%s&game=wot' % settings.WGAPI_APPLICATION_ID
-
+CLAN_INFO = '/wgn/clans/info/?clan_id={}'
+SEARCH_CLAN = '/wgn/clans/list/?fields=clan_id&game=wot&search={}'
+SERVERS_INFO = '/wgn/servers/info/?&game=wot'
 
 
 __all__ = (
@@ -19,6 +19,15 @@ __all__ = (
     'save_message',
     'get_messages',
 )
+
+
+def build_url(path):
+    url = urllib.parse.urljoin(settings.WGAPI_BASE_URL, path)
+    url_parts = list(urllib.parse.urlparse(url))
+    query = dict(urllib.parse.parse_qsl(url_parts[4]))
+    query.update({'application_id': settings.WGAPI_APPLICATION_ID})
+    url_parts[4] = urllib.parse.urlencode(query)
+    return urllib.parse.urlunparse(url_parts)
 
 
 class PapiRequestSession:
@@ -34,17 +43,17 @@ class PapiRequestSession:
 
 def get_clan_info(clan_id):
     papi_request = PapiRequestSession()
-    return papi_request.session.get(CLAN_INFO.format(clan_id)).json()
+    return papi_request.session.get(build_url(CLAN_INFO.format(clan_id))).json()
 
 
 def search_clan(search_txt):
     papi_request = PapiRequestSession()
-    return papi_request.session.get(SEARCH_CLAN.format(search_txt)).json()
+    return papi_request.session.get(build_url(SEARCH_CLAN.format(search_txt))).json()
 
 
 def get_servers_info():
     papi_request = PapiRequestSession()
-    return papi_request.session.get(SERVERS_INFO).json()
+    return papi_request.session.get(build_url(SERVERS_INFO)).json()
 
 
 def save_message(clan_id, message):
