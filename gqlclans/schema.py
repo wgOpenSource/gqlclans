@@ -108,7 +108,7 @@ class Account(graphene.ObjectType):
 
     # Clan members info
     role = graphene.String()
-    # Fields with numbers in names capitalize incorrectly, https://github.com/graphql-python/graphene/issues/643
+    # Fields with numbers in names capitalize incorrectly, will be fixed in graphene 2.0.2
     # role_i18n = graphene.String()
     joined_at = graphene.Int()
     clan = graphene.Field(lambda: Clan)
