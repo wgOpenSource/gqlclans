@@ -42,14 +42,12 @@ def exit_and_print_error(silent, error_text):
 
 
 def generate_settings_file(args):
-    template = """import os
+    application_id = format_arg(args.wgapi_application_id)
+    return f"""import os
 
 
-WGAPI_APPLICATION_ID = %(application_id)s
+WGAPI_APPLICATION_ID = {application_id}
 """
-    return template % {
-        'application_id': format_arg(args.wgapi_application_id)
-    }
 
 
 def format_arg(value):

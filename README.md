@@ -16,7 +16,7 @@ Install python packages in virtualenv:
 
 Generate settings
 
-    ```
+    ```bash
     python ./scripts/init_settings.py <WGAPI_APPLICATION_ID>
     ```
 
