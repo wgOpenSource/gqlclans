@@ -6,10 +6,10 @@ import requests
 
 import settings
 
-
-CLAN_INFO = '/wgn/clans/info/?clan_id={}'
-SEARCH_CLAN = '/wgn/clans/list/?fields=clan_id&game=wot&search={}'
-SERVERS_INFO = '/wgn/servers/info/?&game=wot'
+CLAN_INFO = 'https://api.worldoftanks.ru/wgn/clans/info/?application_id=8c2d3111d4e93eaa2a6e008424123d6d&game=wot&clan_id={}'
+ACCOUNT_INFO = 'https://api.worldoftanks.ru/wot/account/info/?application_id=8c2d3111d4e93eaa2a6e008424123d6d&account_id={}'
+SEARCH_CLAN = 'https://api.worldoftanks.ru/wgn/clans/list/?application_id=8c2d3111d4e93eaa2a6e008424123d6d&fields=clan_id&game=wot&search={}'
+SERVERS_INFO = 'https://api.worldoftanks.ru/wgn/servers/info/?application_id=8c2d3111d4e93eaa2a6e008424123d6d&game=wot'
 
 
 __all__ = (
@@ -46,9 +46,14 @@ def get_clan_info(clan_id):
     return papi_request.session.get(build_url(CLAN_INFO.format(clan_id))).json()
 
 
-def search_clan(search_txt):
+def get_account_info(account_id):
     papi_request = PapiRequestSession()
-    return papi_request.session.get(build_url(SEARCH_CLAN.format(search_txt))).json()
+    return papi_request.session.get(ACCOUNT_INFO.format(account_id)).json()
+
+
+def search_clan(search):
+    papi_request = PapiRequestSession()
+    return papi_request.session.get(SEARCH_CLAN.format(search)).json()
 
 
 def get_servers_info():

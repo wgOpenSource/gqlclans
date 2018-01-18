@@ -6,60 +6,105 @@ from gqlclans.schema import schema
 from gqlclans.app import app
 
 
-def test_clan():
+MOCKED_CLAN_INFO_RESPONSE = {
+    'status': 'ok',
+    'data': {
+        '12344': {
+            'clan_id': 12344,
+            'name': 'Mocked Name',
+            'tag': 'MCKD',
+            'color': '000000',
+            'members': [{
+                'account_name': f'Account-{i}',
+                'account_id': i,
+                'role': 'private',
+            } for i in range(5)]
+        }
+    }
+}
+
+MOCKED_CLAN_SEARCH_RESPONSE = {
+    'status': 'ok',
+    'data': [
+        {
+            'clan_id': 12344,
+            'name': 'Mocked Name 12344',
+            'tag': 'MCKD 12344',
+            'color': '000000',
+        },
+        {
+            'clan_id': 10000,
+            'name': 'Mocked Name 10000',
+            'tag': 'MCKD 10000',
+            'color': '000000',
+        },
+    ]
+}
+
+MOCKED_SERVERS_INFO_RESPONSE = {
+    'status': 'ok',
+    'data': {
+        'wot': [{
+            'players_online': i * 100,
+            'server': f'RU{i}',
+        } for i in range(8)]
+    }
+}
+
+
+def test_clan(mocker):
+    mocker.patch('gqlclans.logic.get_clan_info', return_value=MOCKED_CLAN_INFO_RESPONSE)
     query = '{ clans(clanId: "10164") { tag name }}'
     client = Client(schema)
     result = client.execute(query)
-    assert result == {
-        'data': {
-            'clans': [
-                {
-                    'tag': 'BOUHA',
-                    'name': 'Второй  всадник  апокалипсиса',
-                }
-            ]
+    assert result['data']['clans'] == [
+        {
+            'tag': 'MCKD',
+            'name': 'Mocked Name',
         }
-    }
+    ]
 
 
-def test_servers():
+def test_servers(mocker):
+    mocker.patch('gqlclans.logic.get_servers_info', return_value=MOCKED_SERVERS_INFO_RESPONSE)
     query = '{ servers(limit: 2) { server playersOnline }}'
     client = Client(schema)
     result = client.execute(query)
-    assert result == {
-        'data': {
-            'servers': [
-                {
-                    'playersOnline': 74532,
-                    'server': 'RU8',
-                },
-                {
-                    'playersOnline': 54727,
-                    'server': 'RU7',
-                }
-            ]
+    assert result['data']['servers'] == [
+        {
+            'playersOnline': 0,
+            'server': 'RU0',
+        },
+        {
+            'playersOnline': 100,
+            'server': 'RU1',
         }
-    }
+    ]
 
 
-def test_search():
-    query = '{ search(searchTxt: "BOUHA") { tag name }}'
+def test_search(mocker):
+    mocker.patch('gqlclans.logic.search_clan', return_value={
+        'data': [{'clan_id': '12345'}, {'clan_id': '10000'}]
+    })
+    mocker.patch('gqlclans.logic.get_clan_info', return_value={
+        'data': {
+            '12345': {'name': 'Mocked Name 12344', 'tag': 'MCKD 12344', 'members': [], 'clan_id': 12345, 'color': ''},
+            '10000': {'name': 'Mocked Name 10000', 'tag': 'MCKD 10000', 'members': [], 'clan_id': 10000, 'color': ''},
+        }
+    })
+    query = '{ searchClans(search: "BOUHA") { tag name }}'
     client = Client(schema)
     result = client.execute(query)
-    assert result == {
-        'data': {
-            'search': [
-                {
-                    'tag': 'BETH',
-                    'name': 'BouHa',
-                },
-                {
-                    'tag': 'BOUHA',
-                    'name': 'Второй  всадник  апокалипсиса',
-                },
-            ]
-        }
-    }
+    assert result['data']['searchClans'] == [
+        {
+            'tag': 'MCKD 12344',
+            'name': 'Mocked Name 12344',
+        },
+        {
+            'tag': 'MCKD 10000',
+            'name': 'Mocked Name 10000',
+        },
+    ]
 
 
 def test_mutation():
@@ -88,6 +133,7 @@ def test_mutation():
 
 
 def test_batch_loading_cache(mocker):
+    mocked_clan_info = mocker.patch('gqlclans.logic.get_clan_info', return_value=MOCKED_CLAN_INFO_RESPONSE)
     query = '''{
         clans(clanId: "12344") {
             members {
@@ -98,40 +144,22 @@ def test_batch_loading_cache(mocker):
         }
     }
     '''
-    mocked_clan_info_response = {
-        'data': {
-            '12344': {
-                'clan_id': 12344,
-                'name': 'Mocked Name',
-                'tag': 'MCKD',
-                'color': '000000',
-                'members': [{
-                    'account_name': f'Account-{i}',
-                    'account_id': i,
-                    'role': 'private',
-                } for i in range(5)]
-            }
-        }
-    }
-    mocked_clan_info = mocker.patch('gqlclans.logic.get_clan_info', return_value=mocked_clan_info_response)
 
     client = Client(schema)
     result = client.execute(query)
     assert len(mocked_clan_info.mock_calls) == 2
-    assert result == {
-        'data': {
-            'clans': [{
-                'members': [{
-                    'clan': {
-                        'clanId': '12344',
-                    }
-                } for _ in range(5)]
-            }]
-        },
-    }
+    assert result['data']['clans'] == [{
+        'members': [{
+            'clan': {
+                'clanId': '12344',
+            }
+        } for _ in range(5)]
+    }]
 
 
-async def test_app(test_client):
+async def test_app(test_client, mocker):
+    mocker.patch('gqlclans.logic.get_clan_info', return_value=MOCKED_CLAN_INFO_RESPONSE)
+
     client = await test_client(app)
     response = await client.get('/?query={clans{name tag}}')
     assert response.history[0].status == 307
@@ -143,6 +171,6 @@ async def test_app(test_client):
     content = await response.content.read()
     assert json.loads(content) == {
         'data': {
-            'clans': [{'tag': 'BOUHA', 'name': 'Второй  всадник  апокалипсиса'}]
+            'clans': [{'tag': 'MCKD', 'name': 'Mocked Name'}]
         }
     }
