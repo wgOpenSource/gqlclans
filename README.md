@@ -34,9 +34,17 @@ To run backend container from docker:
 
 Service will be available via [http://0.0.0.0:8567](http://0.0.0.0:8567)
 
-## Contibuting
 
-After developing, the full test suide can be evaluated by running:
-    ```bash
-    tox
+## Contributing
+    
+After developing, the full test suite can be evaluated by running:
+
+    ```sh
+    pytest --benchmark-skip  # Use -v -s for verbose mode
+    ```
+    
+You can also run the benchmarks with:
+    
+    ```sh
+    pytest --benchmark-only
     ```
