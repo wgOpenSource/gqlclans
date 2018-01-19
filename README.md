@@ -48,3 +48,9 @@ You can also run the benchmarks with:
     ```sh
     pytest --benchmark-only
     ```
+    
+For isolation, it could be better to use tox for running tests:
+
+    ```sh
+    tox
+    ```
