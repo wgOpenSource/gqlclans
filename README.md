@@ -6,19 +6,25 @@ A boilerplate app with integration [Wargaming public API](https://developers.war
 
 Install python packages in virtualenv:
 
-    ```bash
+```bash
     cd gqlclans
     mkvirtualenv gqlclans --python=python3.6
     pip install -r requirements.txt
-    ```
+```
 
 ## Usage
 
 To run http server command:
 
-    ```bash
+```bash
     python start_app.py
-    ```
+```
+
+To run server with reload mode use aiohttp-devtools `adev` comand:
+
+```bash
+adev runserver start_app.py --port=8567
+```
 
 Now you can visit [http://localhost:8567](http://localhost:8567) and play with GraphQL queries in GraphiQL console
 
@@ -27,16 +33,30 @@ Now you can visit [http://localhost:8567](http://localhost:8567) and play with G
 
 To run backend container from docker:
 
-    ```bash
+```bash
     docker create --name=gqlclans -t -i -p 8567:8567 sudoaptget/gqlclans:latest
     docker start -i gqlclans
-    ```
+```
 
 Service will be available via [http://0.0.0.0:8567](http://0.0.0.0:8567)
 
-## Contibuting
 
-After developing, the full test suide can be evaluated by running:
-    ```bash
+## Contributing
+    
+After developing, the full test suite can be evaluated by running:
+
+```bash
+    pytest --benchmark-skip  # Use -v -s for verbose mode
+```
+    
+You can also run the benchmarks with:
+    
+```bash
+    pytest --benchmark-only
+```
+    
+For isolation, it could be better to use tox for running tests:
+
+```bash
     tox
-    ```
+```
