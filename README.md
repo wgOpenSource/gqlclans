@@ -45,18 +45,18 @@ Service will be available via [http://0.0.0.0:8567](http://0.0.0.0:8567)
     
 After developing, the full test suite can be evaluated by running:
 
-    ```sh
+```bash
     pytest --benchmark-skip  # Use -v -s for verbose mode
-    ```
+```
     
 You can also run the benchmarks with:
     
-    ```sh
+```bash
     pytest --benchmark-only
-    ```
+```
     
 For isolation, it could be better to use tox for running tests:
 
-    ```sh
+```bash
     tox
-    ```
+```
