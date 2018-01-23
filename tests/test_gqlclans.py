@@ -2,6 +2,7 @@
 import json
 
 from graphene.test import Client
+from gqlclans.data_loaders import DataLoaders
 from gqlclans.schema import schema
 from gqlclans.app import app
 
@@ -146,7 +147,7 @@ def test_batch_loading_cache(mocker):
     '''
 
     client = Client(schema)
-    result = client.execute(query)
+    result = client.execute(query, context_value={'data_loaders': DataLoaders})
     assert mocked_clan_info.call_count == 2
     assert result['data']['clans'] == [{
         'members': [{
