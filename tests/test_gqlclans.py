@@ -147,7 +147,7 @@ def test_batch_loading_cache(mocker):
 
     client = Client(schema)
     result = client.execute(query)
-    assert len(mocked_clan_info.mock_calls) == 2
+    assert mocked_clan_info.call_count == 2
     assert result['data']['clans'] == [{
         'members': [{
             'clan': {

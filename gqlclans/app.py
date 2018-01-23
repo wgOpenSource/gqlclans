@@ -1,7 +1,7 @@
 import json
 
 from aiohttp import web
-from aiohttp_graphql import GraphQLView
+from gqlclans.views import GraphQLView
 
 from gqlclans.schema import schema
 
