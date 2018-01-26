@@ -1,24 +1,8 @@
 import graphene
-from promise import Promise
-from promise.dataloader import DataLoader
 from stringcase import camelcase, snakecase
 
 from gqlclans import logic
 from gqlclans.utils import get_fields
-
-
-class ClanLoader(DataLoader):
-    def batch_load_fn(self, ids):
-        return Promise.resolve([logic.get_clan_info(id) for id in ids])
-
-
-class AccountLoader(DataLoader):
-    def batch_load_fn(self, ids):
-        return Promise.resolve([logic.get_account_info(id) for id in ids])
-
-
-clan_loader = ClanLoader()
-account_loader = AccountLoader()
 
 
 class ServerInfo(graphene.ObjectType):
@@ -59,13 +43,14 @@ class Clan(graphene.ObjectType):
         return {field for field in requested_fields if field not in clan_member_fields}
 
     @staticmethod
-    def request_members_additional_info(accounts, fields):
+    def request_members_additional_info(accounts, fields, loader):
         account_ids = map(lambda account: str(account['account_id']), accounts)
-        account_promise = account_loader.load(','.join(account_ids)).then(lambda result: list(result['data'].values()))
+        account_promise = loader.load(','.join(account_ids)).then(lambda result: list(result['data'].values()))
         accounts_data = account_promise.get()
+        accounts_data = {account['account_id']: account for account in accounts_data}
         for account in accounts:
             account.update({
-                snakecase(field): accounts_data[snakecase(field)] for field in fields
+                snakecase(field): accounts_data[account['account_id']][snakecase(field)] for field in fields
             })
 
     def create_graphene_accounts(self, accounts_data, requested_fields):
@@ -85,7 +70,8 @@ class Clan(graphene.ObjectType):
         requested_fields = get_fields(info).keys()
         request_account_info_fields = self.get_additional_info_requested_fields(requested_fields)
         if request_account_info_fields:
-            self.request_members_additional_info(self.members, request_account_info_fields)
+            loader = info.context['data_loaders'].account_loader
+            self.request_members_additional_info(self.members, request_account_info_fields, loader)
 
         return self.create_graphene_accounts(self.members, requested_fields)
 
@@ -117,7 +103,9 @@ class Account(graphene.ObjectType):
 
     def resolve_clan(self, info):
         if self.clan_id:
-            return clan_loader.load(self.clan_id).then(lambda data: clan_from_data(data['data'][str(self.clan_id)]))
+            return info.context['data_loaders'].clan_loader.load(self.clan_id).then(
+                lambda data: clan_from_data(data['data'][str(self.clan_id)])
+            )
         return None
 
 
@@ -149,15 +137,18 @@ class Query(graphene.ObjectType):
         requested_fields = get_fields(info).keys()
         clan_specific_account_fields = list(map(camelcase, ('joined_at', 'role', 'role_i18n',)))
         request_clan_account_fields = [field for field in requested_fields if field in clan_specific_account_fields]
+        loaders = info.context['data_loaders']
 
-        accounts_promise = account_loader.load(','.join(account_ids)).then(lambda result: list(result['data'].values()))
+        accounts_promise = loaders.account_loader.load(','.join(account_ids)).then(
+            lambda result: list(result['data'].values())
+        )
         accounts_data = accounts_promise.get()
 
         if request_clan_account_fields:
             clan_ids = {str(account_data['clan_id']) for account_data in accounts_data if account_data.get('clan_id')}
             clans_data = None
             if clan_ids:
-                clans_promise = clan_loader.load(','.join(clan_ids)).then(lambda result: result['data'])
+                clans_promise = loaders.clan_loader.load(','.join(clan_ids)).then(lambda result: result['data'])
                 clans_data = clans_promise.get()
             for account in accounts_data:
                 account_clan_data = None
