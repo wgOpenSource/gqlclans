@@ -2,8 +2,10 @@ aiohttp
 aiohttp-devtools
 aiohttp-graphql
 graphene
+mock
 requests
 pytest
 pytest-mock
 pytest-aiohttp
+pytest-benchmark
 stringcase
