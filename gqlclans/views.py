@@ -3,7 +3,7 @@ from aiohttp_graphql import GraphQLView as BaseGraphQLView
 from gqlclans.data_loaders import DataLoaders
 
 
-class GraphQLView(BaseGraphQLView):
+class ClansGraphQLView(BaseGraphQLView):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
