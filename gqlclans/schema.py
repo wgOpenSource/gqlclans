@@ -1,4 +1,6 @@
 import graphene
+from datetime import datetime
+from graphene.types.datetime import DateTime
 from stringcase import camelcase, snakecase
 
 from gqlclans import logic
@@ -29,13 +31,34 @@ class AddMessage(graphene.Mutation):
         return AddMessage(message=message, success=success)
 
 
+class Emblem(graphene.ObjectType):
+    size = graphene.String()
+    place = graphene.String()
+    url = graphene.String()
+
+
 class Clan(graphene.ObjectType):
-    name = graphene.String()
-    tag = graphene.String()
+    accepts_join_requests = graphene.Boolean()
     clan_id = graphene.ID()
     color = graphene.String()
+    created_at = DateTime()
+    creator_name = graphene.String()
+    description = graphene.String()
+    description_html = graphene.String()
+    emblems = graphene.List(Emblem)
+    game = graphene.String()
+    is_clan_disbanded = graphene.String()
+    leader_name = graphene.String()
     members = graphene.List(lambda: Account)
+    members_count = graphene.Int()
     messages = graphene.List(Message)
+    motto = graphene.String()
+    name = graphene.String()
+    old_name = graphene.String()
+    old_tag = graphene.String()
+    renamed_at = DateTime()
+    tag = graphene.String()
+    updated_at = DateTime()
 
     @staticmethod
     def get_additional_info_requested_fields(requested_fields):
@@ -62,6 +85,8 @@ class Clan(graphene.ObjectType):
             }
             if 'nickname' in requested_fields:
                 account_data.update({'nickname': account.get('account_name') or account.get('nickname')})
+            apply_fn_to_dict(datetime.fromtimestamp, account_data,
+                             ['created_at', 'logout_at', 'updated_at', 'joined_at'])
             accounts.append(Account(**account_data))
 
         return accounts
@@ -85,18 +110,18 @@ class Account(graphene.ObjectType):
     account_id = graphene.ID()
     clan_id = graphene.ID()
     client_language = graphene.String()
-    created_at = graphene.Int()
+    created_at = DateTime()
     global_rating = graphene.Int()
     last_battle_time = graphene.Int()
-    logout_at = graphene.Int()
+    logout_at = DateTime()
     nickname = graphene.String()
-    updated_at = graphene.Int()
+    updated_at = DateTime()
 
     # Clan members info
     role = graphene.String()
     # Fields with numbers in names capitalize incorrectly, will be fixed in graphene 2.0.2
     # role_i18n = graphene.String()
-    joined_at = graphene.Int()
+    joined_at = DateTime()
     clan = graphene.Field(lambda: Clan)
     # Statistics is a complex structure
     # statistics = graphene.Field()
@@ -172,17 +197,46 @@ class Query(graphene.ObjectType):
 
 def clan_from_data(data):
     return Clan(
-        name=data['name'],
-        tag=data['tag'],
+        accepts_join_requests=data['accepts_join_requests'],
         clan_id=data['clan_id'],
         color=data['color'],
+        created_at=datetime.fromtimestamp(data['created_at']),
+        creator_name=data['creator_name'],
+        description=data['description'],
+        description_html=data['description_html'],
+        emblems=dict_to_emblem(data['emblems']),
+        game=data['game'],
+        is_clan_disbanded=data['is_clan_disbanded'],
+        leader_name=data['leader_name'],
         members=data['members'],
+        members_count=data['members_count'],
         messages=map(lambda body: Message(body=body), logic.get_messages(data['clan_id'])),
+        motto=data['motto'],
+        name=data['name'],
+        old_name=data['old_name'],
+        old_tag=data['old_tag'],
+        renamed_at=datetime.fromtimestamp(data['renamed_at']),
+        tag=data['tag'],
+        updated_at=datetime.fromtimestamp(data['updated_at']),
     )
+
+
+def dict_to_emblem(emblem_raw):
+    result = []
+    for size, data in emblem_raw.items():
+        for place, url in data.items():
+            result.append(Emblem(size=size, place=place, url=url))
+    return result
 
 
 def parse_clans_data(data):
     return [clan_from_data(content) for content in data.values()]
+
+
+def apply_fn_to_dict(func, dictionary, fields):
+    for field in fields:
+        if field in dictionary:
+            dictionary[field] = func(dictionary[field])
 
 
 schema = graphene.Schema(query=Query, mutation=Mutation)

@@ -7,38 +7,52 @@ from gqlclans.schema import schema
 from gqlclans.app import app
 
 
+def fake_clan_body(**kwargs):
+    clan = {
+        'clan_id': 12344,
+        'name': 'Mocked Name',
+        'tag': 'MCKD',
+        'color': '000000',
+        'accepts_join_requests': True,
+        'created_at': 0,
+        'creator_name': 'creator_name',
+        'description': 'description',
+        'description_html': '<p>description_html</p>',
+        'emblems': {'x34': {'wot': 'http://example.com/x34.ipg'}},
+        'game': 'wot',
+        'is_clan_disbanded': False,
+        'leader_name': 'leader_name',
+        'members_count': 10,
+        'motto': 'motto',
+        'old_name': '',
+        'old_tag': '',
+        'renamed_at': 0,
+        'updated_at': 0,
+    }
+    clan.update(kwargs)
+    return clan
+
+
 MOCKED_CLAN_INFO_RESPONSE = {
     'status': 'ok',
     'data': {
-        '12344': {
-            'clan_id': 12344,
-            'name': 'Mocked Name',
-            'tag': 'MCKD',
-            'color': '000000',
-            'members': [{
+        '12344': fake_clan_body(members=[{
                 'account_name': f'Account-{i}',
                 'account_id': i,
                 'role': 'private',
-            } for i in range(5)]
-        }
+            } for i in range(5)])
     }
 }
 
 MOCKED_CLAN_SEARCH_RESPONSE = {
     'status': 'ok',
     'data': [
-        {
-            'clan_id': 12344,
-            'name': 'Mocked Name 12344',
-            'tag': 'MCKD 12344',
-            'color': '000000',
-        },
-        {
-            'clan_id': 10000,
-            'name': 'Mocked Name 10000',
-            'tag': 'MCKD 10000',
-            'color': '000000',
-        },
+        fake_clan_body(name='Mocked Name', tag='MCKD 12344'),
+        fake_clan_body(
+            clan_id=10000,
+            name='Mocked Name 10000',
+            tag='MCKD 10000',
+        ),
     ]
 }
 
@@ -89,8 +103,8 @@ def test_search(mocker):
     })
     mocker.patch('gqlclans.logic.get_clan_info', return_value={
         'data': {
-            '12345': {'name': 'Mocked Name 12344', 'tag': 'MCKD 12344', 'members': [], 'clan_id': 12345, 'color': ''},
-            '10000': {'name': 'Mocked Name 10000', 'tag': 'MCKD 10000', 'members': [], 'clan_id': 10000, 'color': ''},
+            '12345': fake_clan_body(name='Mocked Name 12344', tag='MCKD 12344', clan_id=12345, members=[]),
+            '10000': fake_clan_body(name='Mocked Name 10000', tag='MCKD 10000', members=[], clan_id=10000,),
         }
     })
     query = '{ searchClans(search: "BOUHA") { tag name }}'
